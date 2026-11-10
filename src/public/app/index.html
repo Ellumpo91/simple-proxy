@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12161c">
+<title>Klarsicht – Videos ohne Drumherum</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --text: #171a1f; --muted: #626b78;
+  --line: #dfe3e8; --accent: #0f766e; --accent-text: #ffffff; --danger: #b42318;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161c; --surface: #1b2129; --text: #e9edf2; --muted: #9aa5b4;
+    --line: #2c343f; --accent: #2dd4bf; --accent-text: #06231f; --danger: #ff8a7a;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; color: inherit; }
+header {
+  position: sticky; top: 0; z-index: 5; background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.bar {
+  max-width: 1280px; margin: 0 auto; padding: 10px 16px;
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+}
+.brand { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; }
+.brand span { color: var(--accent); }
+form.search { flex: 1 1 240px; display: flex; gap: 8px; min-width: 0; }
+input[type=search], input[type=text] {
+  flex: 1; min-width: 0; padding: 9px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--bg);
+}
+input:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.btn {
+  padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); cursor: pointer; white-space: nowrap;
+}
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; font-weight: 600; }
+nav { display: flex; gap: 4px; }
+nav a { padding: 8px 12px; border-radius: 999px; color: var(--muted); }
+nav a.active { background: var(--bg); color: var(--text); font-weight: 600; }
+main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
+h1 { font-size: 1.3rem; margin: 0 0 16px; }
+.grid { display: grid; gap: 20px 16px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.card .thumb {
+  position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden;
+  background: var(--line);
+}
+.card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card .dur {
+  position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; border-radius: 6px;
+  background: rgba(0, 0, 0, .8); color: #fff; font-size: .78rem; font-variant-numeric: tabular-nums;
+}
+.card h2 {
+  font-size: .98rem; margin: 8px 0 2px; font-weight: 600;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.meta { color: var(--muted); font-size: .86rem; }
+.watch { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .watch { grid-template-columns: minmax(0, 1fr) 340px; } }
+.player { aspect-ratio: 16 / 9; width: 100%; border: 0; border-radius: 12px; background: #000; display: block; }
+.watch h1 { margin: 14px 0 6px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.desc {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .92rem;
+  max-height: 9.5em; overflow: hidden;
+}
+.desc.open { max-height: none; }
+.side { display: grid; gap: 14px; align-content: start; }
+.side .card { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; }
+.side .card h2 { margin-top: 0; font-size: .9rem; }
+.note {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 16px; max-width: 640px;
+}
+.note p { margin: 0 0 10px; }
+.note form { display: flex; gap: 8px; flex-wrap: wrap; }
+.error { color: var(--danger); }
+.more { display: flex; justify-content: center; margin-top: 24px; }
+footer { max-width: 1280px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: .82rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a class="brand" href="#/">Klar<span>sicht</span></a>
+    <form class="search" id="search" role="search">
+      <input type="search" id="q" placeholder="Videos suchen" aria-label="Videos suchen" autocomplete="off">
+      <button class="btn primary" type="submit">Suchen</button>
+    </form>
+    <nav>
+      <a href="#/" data-nav="home">Beliebt</a>
+      <a href="#/later" data-nav="later">Merkliste</a>
+      <a href="#/history" data-nav="history">Verlauf</a>
+    </nav>
+  </div>
+</header>
+<main id="view"></main>
+<footer>
+  Klarsicht ist eine unabhängige Oberfläche. Videos laufen im offiziellen eingebetteten YouTube-Player;
+  Werbung innerhalb des Videos kann YouTube dort weiterhin einblenden.
+</footer>
+
+<script>
+'use strict';
+
+// relative links below assume the trailing slash
+if (location.pathname.endsWith('/app')) location.replace(`${location.pathname}/${location.hash}`);
+
+const GOOGLE_API = 'https://www.googleapis.com/youtube/v3';
+const view = document.getElementById('view');
+const searchInput = document.getElementById('q');
+
+// ---------- storage ----------
+const store = {
+  get(name, fallback) {
+    try { return JSON.parse(localStorage.getItem(name)) ?? fallback; } catch { return fallback; }
+  },
+  set(name, value) {
+    try { localStorage.setItem(name, JSON.stringify(value)); } catch { /* storage unavailable */ }
+  },
+};
+
+function saveToList(name, video, limit) {
+  const list = store.get(name, []).filter((v) => v.id !== video.id);
+  list.unshift(video);
+  store.set(name, list.slice(0, limit));
+}
+
+// ---------- API ----------
+class MissingKeyError extends Error {}
+
+async function api(endpoint, params) {
+  const query = new URLSearchParams(params);
+  const ownKey = store.get('ks-key', '');
+  let response;
+  if (ownKey) {
+    query.set('key', ownKey);
+    response = await fetch(`${GOOGLE_API}/${endpoint}?${query}`);
+  } else {
+    response = await fetch(`../yt/${endpoint}?${query}`);
+    if (response.status === 501) throw new MissingKeyError();
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const reason = data?.error?.errors?.[0]?.reason;
+    if (reason === 'quotaExceeded') throw new Error('Das Tageskontingent der YouTube-API ist aufgebraucht. Morgen geht es wieder.');
+    if (response.status === 400 || response.status === 403) {
+      throw new Error(`YouTube hat die Anfrage abgelehnt (${data?.error?.message || response.status}). Bitte API-Schlüssel prüfen.`);
+    }
+    throw new Error(`Anfrage fehlgeschlagen (${response.status}).`);
+  }
+  return data;
+}
+
+function toVideo(item) {
+  const s = item.snippet || {};
+  const thumbs = s.thumbnails || {};
+  return {
+    id: typeof item.id === 'string' ? item.id : item.id?.videoId,
+    title: s.title || '',
+    channel: s.channelTitle || '',
+    channelId: s.channelId || '',
+    published: s.publishedAt || '',
+    description: s.description || '',
+    thumb: (thumbs.medium || thumbs.high || thumbs.default || {}).url || '',
+    duration: item.contentDetails?.duration || '',
+    views: item.statistics?.viewCount,
+  };
+}
+
+// search results carry no duration/views, so fetch the details in one extra call
+async function withDetails(videos) {
+  const ids = videos.map((v) => v.id).filter(Boolean);
+  if (!ids.length) return [];
+  const data = await api('videos', { part: 'snippet,contentDetails,statistics', id: ids.join(','), maxResults: 50 });
+  const byId = new Map((data.items || []).map((item) => [item.id, toVideo(item)]));
+  return ids.map((id) => byId.get(id)).filter(Boolean);
+}
+
+// ---------- formatting ----------
+function seconds(iso) {
+  const m = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(iso || '');
+  return m ? (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0) : 0;
+}
+function formatDuration(iso) {
+  const total = seconds(iso);
+  if (!total) return '';
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = String(total % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+}
+function formatViews(count) {
+  if (count == null) return '';
+  return `${new Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 1 }).format(count)} Aufrufe`;
+}
+function formatAge(iso) {
+  const days = (Date.now() - new Date(iso).getTime()) / 86400000;
+  if (!Number.isFinite(days)) return '';
+  const rtf = new Intl.RelativeTimeFormat('de', { numeric: 'auto' });
+  if (days < 1) return rtf.format(-Math.max(1, Math.round(days * 24)), 'hour');
+  if (days < 30) return rtf.format(-Math.round(days), 'day');
+  if (days < 365) return rtf.format(-Math.round(days / 30), 'month');
+  return rtf.format(-Math.round(days / 365), 'year');
+}
+
+// ---------- rendering ----------
+function el(tag, props, ...children) {
+  const node = document.createElement(tag);
+  Object.entries(props || {}).forEach(([name, value]) => {
+    if (name === 'class') node.className = value;
+    else if (name.startsWith('on')) node.addEventListener(name.slice(2), value);
+    else if (value != null) node.setAttribute(name, value);
+  });
+  node.append(...children.filter((c) => c != null));
+  return node;
+}
+
+function card(video) {
+  const duration = formatDuration(video.duration);
+  return el('a', { class: 'card', href: `#/watch/${video.id}` },
+    el('div', { class: 'thumb' },
+      video.thumb ? el('img', { src: video.thumb, alt: '', loading: 'lazy' }) : null,
+      duration ? el('span', { class: 'dur' }, duration) : null),
+    el('div', null,
+      el('h2', null, video.title),
+      el('div', { class: 'meta' }, video.channel),
+      el('div', { class: 'meta' }, [formatViews(video.views), formatAge(video.published)].filter(Boolean).join(' · '))));
+}
+
+function grid(videos) {
+  return el('div', { class: 'grid' }, ...videos.map(card));
+}
+
+function message(text, isError) {
+  return el('p', { class: isError ? 'error' : 'meta' }, text);
+}
+
+function keyPrompt() {
+  const input = el('input', { type: 'text', placeholder: 'API-Schlüssel einfügen', 'aria-label': 'YouTube-API-Schlüssel' });
+  return el('div', { class: 'note' },
+    el('h1', null, 'Einmalig einrichten'),
+    el('p', null, 'Klarsicht nutzt die offizielle YouTube-Data-API und braucht dafür einen kostenlosen API-Schlüssel ',
+      '(Google Cloud Console → „YouTube Data API v3“ aktivieren → Anmeldedaten → API-Schlüssel).'),
+    el('p', { class: 'meta' }, 'Der Schlüssel bleibt nur in diesem Browser gespeichert. ',
+      'Alternativ auf dem Server die Umgebungsvariable YOUTUBE_API_KEY setzen.'),
+    el('form', {
+      onsubmit(e) {
+        e.preventDefault();
+        if (!input.value.trim()) return;
+        store.set('ks-key', input.value.trim());
+        route();
+      },
+    }, input, el('button', { class: 'btn primary', type: 'submit' }, 'Speichern')));
+}
+
+function showError(error) {
+  if (error instanceof MissingKeyError) { view.replaceChildren(keyPrompt()); return; }
+  const children = [message(error.message || 'Etwas ist schiefgelaufen.', true)];
+  if (store.get('ks-key', '')) {
+    children.push(el('button', {
+      class: 'btn',
+      onclick() { store.set('ks-key', ''); route(); },
+    }, 'Gespeicherten API-Schlüssel entfernen'));
+  }
+  view.replaceChildren(...children);
+}
+
+// ---------- pages ----------
+async function pagedList(title, loadPage) {
+  const list = el('div', { class: 'grid' });
+  const moreWrap = el('div', { class: 'more' });
+  view.replaceChildren(el('h1', null, title), list, moreWrap);
+  let token = '';
+  async function load() {
+    moreWrap.replaceChildren(message('Lädt …'));
+    const page = await loadPage(token);
+    if (!view.contains(list)) return;
+    list.append(...page.videos.map(card));
+    token = page.next || '';
+    moreWrap.replaceChildren();
+    if (!list.children.length) moreWrap.append(message('Nichts gefunden.'));
+    else if (token) {
+      moreWrap.append(el('button', {
+        class: 'btn',
+        onclick() { load().catch((e) => moreWrap.replaceChildren(message(e.message, true))); },
+      }, 'Mehr laden'));
+    }
+  }
+  await load();
+}
+
+function homePage() {
+  return pagedList('Gerade beliebt', async (pageToken) => {
+    const params = { part: 'snippet,contentDetails,statistics', chart: 'mostPopular', regionCode: 'DE', hl: 'de', maxResults: 24 };
+    if (pageToken) params.pageToken = pageToken;
+    const data = await api('videos', params);
+    // leave out Shorts-length clips
+    const videos = (data.items || []).map(toVideo).filter((v) => seconds(v.duration) > 90);
+    return { videos, next: data.nextPageToken };
+  });
+}
+
+function searchPage(query) {
+  searchInput.value = query;
+  return pagedList(`Ergebnisse für „${query}“`, async (pageToken) => {
+    const params = { part: 'snippet', type: 'video', q: query, maxResults: 24, regionCode: 'DE', relevanceLanguage: 'de', safeSearch: 'moderate' };
+    if (pageToken) params.pageToken = pageToken;
+    const data = await api('search', params);
+    return { videos: await withDetails((data.items || []).map(toVideo)), next: data.nextPageToken };
+  });
+}
+
+function listPage(title, storeName, emptyText) {
+  const videos = store.get(storeName, []);
+  const children = [el('h1', null, title)];
+  if (videos.length) {
+    children.push(el('div', { class: 'actions' }, el('button', {
+      class: 'btn',
+      onclick() { store.set(storeName, []); route(); },
+    }, 'Liste leeren')), grid(videos));
+  } else children.push(message(emptyText));
+  view.replaceChildren(...children);
+}
+
+async function watchPage(id) {
+  if (!/^[\w-]{11}$/.test(id)) { view.replaceChildren(message('Ungültige Video-Adresse.', true)); return; }
+  view.replaceChildren(message('Lädt …'));
+  const data = await api('videos', { part: 'snippet,contentDetails,statistics', id, hl: 'de' });
+  if (location.hash !== `#/watch/${id}`) return;
+  const item = (data.items || [])[0];
+  if (!item) { view.replaceChildren(message('Dieses Video ist nicht verfügbar.', true)); return; }
+  const video = toVideo(item);
+  saveToList('ks-history', video, 100);
+
+  const player = el('iframe', {
+    class: 'player',
+    src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1`,
+    title: video.title,
+    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+    allowfullscreen: '',
+    referrerpolicy: 'strict-origin-when-cross-origin',
+  });
+
+  const isSaved = () => store.get('ks-later', []).some((v) => v.id === id);
+  const laterBtn = el('button', {
+    class: 'btn',
+    onclick() {
+      if (isSaved()) store.set('ks-later', store.get('ks-later', []).filter((v) => v.id !== id));
+      else saveToList('ks-later', video, 500);
+      laterBtn.textContent = isSaved() ? '✓ Auf der Merkliste' : 'Auf die Merkliste';
+    },
+  }, isSaved() ? '✓ Auf der Merkliste' : 'Auf die Merkliste');
+
+  const desc = el('div', { class: 'desc' }, item.snippet.description || 'Keine Beschreibung.');
+  const descBtn = el('button', {
+    class: 'btn',
+    onclick() { descBtn.textContent = desc.classList.toggle('open') ? 'Weniger anzeigen' : 'Beschreibung ganz anzeigen'; },
+  }, 'Beschreibung ganz anzeigen');
+
+  const side = el('aside', { class: 'side' }, message('Lädt …'));
+  view.replaceChildren(el('div', { class: 'watch' },
+    el('div', null,
+      player,
+      el('h1', null, video.title),
+      el('div', { class: 'meta' }, [video.channel, formatViews(video.views), formatAge(video.published)].filter(Boolean).join(' · ')),
+      el('div', { class: 'actions' },
+        laterBtn,
+        el('a', { class: 'btn', href: `https://www.youtube.com/watch?v=${id}`, target: '_blank', rel: 'noopener' }, 'Auf YouTube öffnen')),
+      desc,
+      el('div', { class: 'actions' }, descBtn)),
+    side));
+  document.title = `${video.title} – Klarsicht`;
+
+  // more from the same channel, deliberately not an endless recommendation feed
+  try {
+    const more = await api('search', { part: 'snippet', type: 'video', channelId: video.channelId, order: 'date', maxResults: 9 });
+    const videos = (await withDetails((more.items || []).map(toVideo))).filter((v) => v.id !== id).slice(0, 8);
+    if (!view.contains(side)) return;
+    side.replaceChildren(el('h1', null, `Mehr von ${video.channel}`), ...(videos.length ? videos.map(card) : [message('Keine weiteren Videos.')]));
+  } catch (error) {
+    if (view.contains(side)) side.replaceChildren(message(error.message, true));
+  }
+}
+
+// ---------- routing ----------
+function route() {
+  const hash = location.hash.replace(/^#\/?/, '');
+  const [page, ...rest] = hash.split('/');
+  const arg = decodeURIComponent(rest.join('/'));
+  document.title = 'Klarsicht – Videos ohne Drumherum';
+  if (page !== 'search') searchInput.value = '';
+  const active = page === '' ? 'home' : page;
+  document.querySelectorAll('nav a').forEach((a) => a.classList.toggle('active', a.dataset.nav === active));
+  window.scrollTo(0, 0);
+
+  let result;
+  if (page === 'watch') result = watchPage(arg);
+  else if (page === 'search' && arg) result = searchPage(arg);
+  else if (page === 'later') result = listPage('Merkliste', 'ks-later', 'Noch nichts gemerkt. Im Video auf „Auf die Merkliste“ tippen.');
+  else if (page === 'history') result = listPage('Verlauf', 'ks-history', 'Noch nichts angesehen.');
+  else result = homePage();
+  Promise.resolve(result).catch(showError);
+}
+
+document.getElementById('search').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const query = searchInput.value.trim();
+  if (!query) return;
+  // accept pasted YouTube links and jump straight to the video
+  const link = /(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/)([\w-]{11})/.exec(query);
+  location.hash = link ? `#/watch/${link[1]}` : `#/search/${encodeURIComponent(query)}`;
+});
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

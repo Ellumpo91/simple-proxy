@@ -20,3 +20,11 @@ Read the docs at https://docs.pstream.org/proxy/introduction
  - AWS lambda
  - nodejs
  - netlify edge functions
+
+---
+
+### web app (`/app`)
+
+A small, uncluttered web UI for YouTube content is served at `/app/`. It uses the official YouTube Data API v3 for search/listings and the official embedded player for playback (so in-video ads are still decided by YouTube).
+
+Set the `YOUTUBE_API_KEY` environment variable on the server (used by the `/yt/*` route), or enter a key in the app on first start; it is then kept in that browser only.
